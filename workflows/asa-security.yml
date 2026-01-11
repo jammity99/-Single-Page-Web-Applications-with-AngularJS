@@ -9,37 +9,39 @@ on:
 jobs:
   asa-scan:
     runs-on: windows-latest
-    steps:
-      # Checkout your code
-      - uses: actions/checkout@v4
 
-      # Install .NET (needed for ASA CLI)
-      - uses: actions/setup-dotnet@v4
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET (for ASA CLI)
+        uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
 
-      # Install ASA CLI
-      - name: Install ASA
+      - name: Install ASA CLI
         run: dotnet tool install -g Microsoft.CST.AttackSurfaceAnalyzer.CLI
 
-      # Baseline snapshot
+      # --- Baseline snapshot: restrict Files to specific dirs (fast) + system collectors ---
       - name: Baseline collect
-        run: asa collect -f -s -r -w -p --selected-directories "C:\Users\SESA705115\Desktop\AssetExtraction_FRCNN_TEXT"
+        run: |
+          asa collect -f -s -r -w -p --selected-directories "C:\work","C:\Users\runneradmin\work"
 
-      # Run your Python app setup
-      - name: Install Python dependencies
-        run: python -m pip install -r requirements.txt
+      # --- Placeholder action (do almost nothing) ---
+      - name: Placeholder action
+        run: echo "This is a minimal step to demonstrate product snapshot later."
 
-      # Product snapshot
+      # --- Product snapshot (same options) ---
       - name: Product collect
-        run: asa collect -f -s -r -w -p --directories "C:\Users\SESA705115\Desktop\AssetExtraction_FRCNN_TEXT"
+        run: |
+          asa collect -f -s -r -w -p --selected-directories "C:\work","C:\Users\runneradmin\work"
 
-      # Compare & Export SARIF
+      # --- Compare and export SARIF ---
       - name: Export SARIF
         run: asa export-collect --outputsarif
 
-      # Upload SARIF to GitHub Security Dashboard
-      - name: Upload SARIF to GitHub Security
+      # --- Upload SARIF to GitHub Security (Code Scanning alerts) ---
+      - name: Upload SARIF
         uses: github/codeql-action/upload-sarif@v3
         with:
-          sarif_file: attack_surface_analyzer.sarif # Replace with actual SARIF filename
+          sarif_file: attack_surface_analyzer.sarif
